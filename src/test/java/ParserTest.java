@@ -1,4 +1,6 @@
 import exceptions.ElementNotFoundException;
+import org.assertj.core.api.Assertions;
+import org.jsoup.nodes.Element;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -24,5 +26,14 @@ class ParserTest {
                 .isInstanceOf(ElementNotFoundException.class)
                 .hasMessage("Element not found with " + Parser.TABLE_CSS_QUERY);
     }
+    @Test
+    public void selectorTableResultTest() throws IOException {
+        var t = Files.readString(Path.of("src/test/resources/selectorTableResult.html"));
+        Element e = new Element(t);
+        var res = Parser.parseSelectorTable(e);
+        assertThat(res.dataTerm).isEqualTo("Осенний");
+        assertThat(res.dataYear).isEqualTo("2021-2022");
+        assertThat(res.departmentName).isEqualTo("Прикладной математики");
 
+    }
 }
