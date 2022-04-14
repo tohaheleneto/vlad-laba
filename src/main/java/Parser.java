@@ -62,6 +62,12 @@ public class Parser {
         }
         return new SelectorTableResult(dY, dT, dN);
     }
+
+    public static TimeTableResult parseTimetableSelector(Element timetableElement) {
+
+//        return new TimeTableResult("","", "", "", "", "","", "");
+        return null;
+    }
 }
 
 
