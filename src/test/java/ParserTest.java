@@ -38,6 +38,24 @@ class ParserTest {
         assertThat(res.dataYear).isEqualTo("2021 - 2022");
         assertThat(res.departmentName).isEqualTo("Прикладной математики");
     }
+    @Test
+    public void parseTimetableSelectorTest() throws IOException {
+        String html = readFile("parseTimetableSelectorWithSingleTable.html");
+        Document doc = Jsoup.parse(html);
+        Element e = doc.selectFirst("table.timetable");
+        var timetableList = Parser.parseTimetableSelector(e);
+        assertThat(timetableList.size()).isEqualTo(1);
+        var res = timetableList.get(0);
+        assertThat(res).isNotNull();
+        assertThat(res.day).isEqualTo("Вторник");
+        assertThat(res.fio).isEqualTo("Баранович А.Е.");
+        assertThat(res.frequency).isEqualTo(Frequency.WEEKLY);
+        assertThat(res.time).isEqualTo("15:35 - 17:05");
+        assertThat(res.group).isEqualTo("3бЛ 3");
+        assertThat(res.place).isEqualTo("Дистанционно");
+        assertThat(res.subject).isEqualTo("Современный аппарат логистического управления");
+        assertThat(res.typeOfSubject).isEqualTo("Лекции");
+    }
 
     public static String readFile(String fileName) throws IOException {
         return Files.readString(Path.of("src/test/resources/" + fileName));

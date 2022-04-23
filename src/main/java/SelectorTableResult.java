@@ -8,4 +8,5 @@ public class SelectorTableResult {
         this.dataTerm = dataTerm;
         this.departmentName = departmentName;
     }
+
 }

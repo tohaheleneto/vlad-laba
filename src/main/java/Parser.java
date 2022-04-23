@@ -2,8 +2,10 @@ import exceptions.ElementNotFoundException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
-
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class Parser {
@@ -57,16 +59,47 @@ public class Parser {
                     throw new IllegalArgumentException();
             }
         }
-        if (thIter.hasNext() || tdIter.hasNext()){
+        if (thIter.hasNext() || tdIter.hasNext()) {
             throw new RuntimeException("Different number of elements");
         }
         return new SelectorTableResult(dY, dT, dN);
     }
 
-    public static TimeTableResult parseTimetableSelector(Element timetableElement) {
-
-//        return new TimeTableResult("","", "", "", "", "","", "");
-        return null;
+    public static List<TimeTableResult> parseTimetableSelector(Element timetableElement) {
+        var trIter = timetableElement.select("tr").iterator();
+        List<TimeTableResult> resultList = new ArrayList<>();
+        String fio = null;
+        String day = null;
+        while (trIter.hasNext()) {
+            var trKey = trIter.next();
+            var trChildren = trKey.children();
+            var firstTrChildren = trChildren.get(0);
+            var tag = firstTrChildren.tag();
+            if (trChildren.size() == 1) {
+                var tagName = tag.getName();
+                if (tagName.equals("th")) {
+                    day = trKey.text();
+                } else if (tagName.equals("td")) {
+                    fio = trKey.text();
+                } else {
+                    throw new RuntimeException("Unknown tag in timetable");
+                }
+            } else if (trChildren.size() == 6) {
+                if (tag.getName().equals("td") && firstTrChildren.select("b").size() == 0) {
+                    String time = trChildren.get(0).text();
+                    Frequency frequency = Frequency.byHtmlValue(trChildren.get(1).text());
+                    String place = trChildren.get(2).text();
+                    String group = trChildren.get(3).text();
+                    String subject = trChildren.get(4).text();
+                    String typeOfSubject = trChildren.get(5).text();
+                    TimeTableResult tr = new TimeTableResult(fio, day, time, frequency, place, group, subject, typeOfSubject);
+                    resultList.add(tr);
+                }
+            } else {
+                throw new RuntimeException("Unexpected number of <tr>");
+            }
+        }
+        return resultList;
     }
 }
 
