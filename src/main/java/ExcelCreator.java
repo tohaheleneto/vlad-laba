@@ -7,6 +7,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
@@ -14,7 +15,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class ExcelCreator {
-    static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    static final DateTimeFormatter DATE_TIME_PATTERN = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public static void saveData(List<TimeTableResult> timeTableData, SelectorTableResult selectorData, LocalDate dayOfTheWeek) throws IOException {
         List<TimeTableResult> timeTableNumerator = new ArrayList<>();
@@ -32,9 +33,10 @@ public class ExcelCreator {
         XSSFWorkbook workbook = new XSSFWorkbook("src/main/resources/template.xlsx");
         CellStyle cs = workbook.createCellStyle();
         cs.setWrapText(true);
-        Sheet sheet = workbook.getSheetAt(0);
-        saveDataToSheet(cs, sheet, timeTableNumerator, selectorData, dayOfTheWeek);
-        saveDataToSheet(cs, workbook.getSheetAt(1), timeTableDenomerator, selectorData, dayOfTheWeek.plus(7, ChronoUnit.DAYS));
+        Sheet sheetNumerator = workbook.getSheetAt(0);
+        Sheet sheetDenominator = workbook.getSheetAt(1);
+        saveDataToSheet(cs, sheetNumerator, timeTableNumerator, selectorData, dayOfTheWeek);
+        saveDataToSheet(cs, sheetDenominator, timeTableDenomerator, selectorData, dayOfTheWeek.plusWeeks(1));
         Scanner sc = new Scanner(System.in);
         String path = sc.nextLine();
         try (
@@ -46,15 +48,16 @@ public class ExcelCreator {
     public static void saveDataToSheet(CellStyle cs, Sheet sheet, List<TimeTableResult> prepared, SelectorTableResult selectorData, LocalDate dayOfTheWeek){
         Cell days = sheet.getRow(1).getCell(0);
         Cell department = sheet.getRow(2).getCell(0);
-        LocalDate monday = dayOfTheWeek.with(ChronoField.DAY_OF_WEEK, 1);
-        LocalDate saturday = dayOfTheWeek.with(ChronoField.DAY_OF_WEEK, 6);
-        String fromToData = days.getStringCellValue().replace("#fromDate", monday.format(DT)
-                .replace("#toDate", saturday.format(DT)));
+        LocalDate monday = dayOfTheWeek.with(ChronoField.DAY_OF_WEEK, DayOfWeek.MONDAY.getValue());
+        LocalDate saturday = dayOfTheWeek.with(ChronoField.DAY_OF_WEEK, DayOfWeek.SATURDAY.getValue());
+        String fromToData = days.getStringCellValue()
+                .replace("#fromDate", monday.format(DATE_TIME_PATTERN)
+                .replace("#toDate", saturday.format(DATE_TIME_PATTERN)));
         String departmentName = department.getStringCellValue().replace("#departmentName", selectorData.departmentName);
         days.setCellValue(fromToData);
         department.setCellValue(departmentName);
         int counter = 1;
-        int j = 6;
+        var j = sheet.getPhysicalNumberOfRows();
         String previousName = null;
         int regionStart = 6;
         int offset = 6;
@@ -63,28 +66,28 @@ public class ExcelCreator {
             Row createdRow = sheet.createRow(j);
             createdRow.setHeight((short) 750);
             sheet.addMergedRegion(new CellRangeAddress(j, j, 2, 3));
-            Cell numbers = createdRow.createCell(0);
-            Cell createdCell1 = createdRow.createCell(1);
-            createdCell1.setCellStyle(cs);
-            Cell createdCell2 = createdRow.createCell(2);
-            createdCell2.setCellStyle(cs);
-            createdCell2.setCellValue(currentTimetable.day + "," + currentTimetable.frequency.htmlValue + "," + currentTimetable.time + "\n" + currentTimetable.typeOfSubject);
+            Cell professorNumbers = createdRow.createCell(0);
+            Cell fioCell = createdRow.createCell(1);
+            fioCell.setCellStyle(cs);
+            Cell dateTimeTypeCell = createdRow.createCell(2);
+            dateTimeTypeCell.setCellStyle(cs);
+            dateTimeTypeCell.setCellValue(String.format("%s, %s, %s, %s", currentTimetable.day, currentTimetable.frequency.htmlValue, currentTimetable.time, currentTimetable.typeOfSubject));
             sheet.addMergedRegion(new CellRangeAddress(j, j, 4, 5));
-            Cell createdCell3 = createdRow.createCell(4);
-            createdCell3.setCellStyle(cs);
-            createdCell3.setCellValue(currentTimetable.group + "," + "________чел.");
-            Cell createdCell4 = createdRow.createCell(6);
-            createdCell4.setCellStyle(cs);
-            createdCell4.setCellValue(currentTimetable.place);
+            Cell groupCell = createdRow.createCell(4);
+            groupCell.setCellStyle(cs);
+            groupCell.setCellValue(currentTimetable.group);
+            Cell placeCell = createdRow.createCell(6);
+            placeCell.setCellStyle(cs);
+            placeCell.setCellValue(currentTimetable.place);
             PropertyTemplate propertyTemplate = new PropertyTemplate();
             propertyTemplate.drawBorders(new CellRangeAddress(j, j, 0, 7),
                     BorderStyle.THIN, BorderExtent.ALL);
             propertyTemplate.applyBorders(sheet);
             j++;
             if (!currentTimetable.fio.equals(previousName)) {
-                numbers.setCellValue(counter++);
+                professorNumbers.setCellValue(counter++);
                 previousName = currentTimetable.fio;
-                createdCell1.setCellValue(previousName);
+                fioCell.setCellValue(previousName);
                 if (i != 0) {
                     sheet.addMergedRegion(new CellRangeAddress(regionStart, j - 2, 0, 0));
                     sheet.addMergedRegion(new CellRangeAddress(regionStart, j - 2, 1, 1));

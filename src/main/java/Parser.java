@@ -56,7 +56,7 @@ public class Parser {
                 case "Форма обучения:":
                     break;
                 default:
-                    throw new IllegalArgumentException();
+                    throw new IllegalArgumentException("Invalid htmlTable");
             }
         }
         if (thIter.hasNext() || tdIter.hasNext()) {
@@ -75,8 +75,8 @@ public class Parser {
             var trChildren = trKey.children();
             var firstTrChildren = trChildren.get(0);
             var tag = firstTrChildren.tag();
+            var tagName = tag.getName();
             if (trChildren.size() == 1) {
-                var tagName = tag.getName();
                 if (tagName.equals("th")) {
                     day = trKey.text();
                 } else if (tagName.equals("td")) {
@@ -85,7 +85,7 @@ public class Parser {
                     throw new RuntimeException("Unknown tag in timetable");
                 }
             } else if (trChildren.size() == 6) {
-                if (tag.getName().equals("td") && firstTrChildren.select("b").size() == 0) {
+                if (tagName.equals("td") && firstTrChildren.select("b").size() == 0) {
                     String time = trChildren.get(0).text();
                     Frequency frequency = Frequency.byHtmlValue(trChildren.get(1).text());
                     String place = trChildren.get(2).text();
